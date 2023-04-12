@@ -13,31 +13,35 @@ const formEl = document.querySelector('.search-form');
 const inputEl = formEl.firstElementChild;
 let page;
 let totalPages;
+let query;
 const gallery = new SimpleLightbox('.gallery a');
 
 
 const handleSubmitSearch = async (event) => {
   event.preventDefault();
   resultMessageEl.classList.add('hidden');
-  const query = event.currentTarget.firstElementChild.value;
+  query = event.currentTarget.firstElementChild.value.trim();
   page = 1;
-
-  try {
-    photosResponse = await photoGallery.getPhotos(query, page);
-  } catch (error) {
-    console.error(error);
-  }
-  totalPages = Math.ceil(photosResponse.data.totalHits / 40);
-  if (!photosResponse.data.hits.length) {
+  if (!query) {
     photosListEl.innerHTML = '';
-    Notiflix.Notify.
-      failure("Sorry, there are no images matching your search query. Please try again.");
+    Notiflix.Notify.failure("Search field cannot be empty!");
+    return;
   } else {
-    Notiflix.Notify.success(`Hooray! We found ${photosResponse.data.totalHits} images.`);
-    photosListEl.innerHTML = photoGallery.renderPhotos(photosResponse.data.hits);
-    gallery.refresh();
-
-
+    try {
+      photosResponse = await photoGallery.getPhotos(query, page);
+    } catch (error) {
+      console.error(error);
+    }
+    totalPages = Math.ceil(photosResponse.data.totalHits / 40);
+    if (!photosResponse.data.hits.length) {
+      photosListEl.innerHTML = '';
+      Notiflix.Notify.
+        failure("Sorry, there are no images matching your search query. Please try again.");
+    } else {
+      Notiflix.Notify.success(`Hooray! We found ${photosResponse.data.totalHits} images.`);
+      photosListEl.innerHTML = photoGallery.renderPhotos(photosResponse.data.hits);
+      gallery.refresh();
+    }
   }
 }
 
@@ -53,7 +57,6 @@ const handleInfiniteScroll = async () => {
   } else {
     if (endOfPage) {
       page += 1;
-      let query = inputEl.value;
       try {
         photosResponse = await photoGallery.getPhotos(query, page);
       } catch (error) {
